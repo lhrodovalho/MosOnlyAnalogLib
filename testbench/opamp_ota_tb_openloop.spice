@@ -1,0 +1,54 @@
+* opamp testbench
+
+* Include SkyWater sky130 device models
+*.lib "~/git/open_pdks/sources/sky130-pdk/libraries/sky130_fd_pr/latest/models/sky130.lib.spice" tt
+.include "./setup.spice"
+.include "../spice/bias.spice"
+.include "../spice/ota.spice"
+
+.param pVDD = 3.3
+
+VDD vdd 0 dc {pVDD} pulse(0 {pVDD} 1m 1m 10u 1 1)
+VSS vss 0 0
+ECM cm vss vdd vss 0.5
+VIN in cm 0  
+
+* DUT
+X0 vdd vss p1 p2 n2 n1 lo        bias
+X1 vdd vss p1 p2 n2 n1 in cm out ota
+
+.save vdd vss p1 p2 n2 n1 lo
+.save in cm out
+.save x1.x x1.yp x1.ym x1.z
+
+*.nodeset V(x0.LO)=10
+
+.option gmin=1e-12
+.control
+
+	op
+	print vdd vss p1 p2 n2 n1 lo
+	print in cm out
+	print x1.x x1.yp x1.z
+
+	dc VIN -10m 10m 0.1m
+	plot out
+	plot deriv(out)
+*    dc VDD 0.1 5 10m
+*    plot I(VDP)
+*    plot 20*log10(abs(deriv(I(VDP))/I(VDP)))
+
+*    plot I(VDN)
+*    plot 20*log10(abs(deriv(I(VDN))/I(VDN)))
+
+    
+*    dc VDP 0.1 3.3 10m
+*    plot I(VDP)
+*    plot 20*log10(abs(deriv(I(VDP))/I(VDP)))
+
+*	tran 100u 10m
+*	plot x0.P x0.Y x0.HI VDD
+    
+.endc
+
+.end

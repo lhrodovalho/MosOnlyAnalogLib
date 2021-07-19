@@ -1,0 +1,27 @@
+magic
+tech sky130A
+timestamp 1624074240
+<< metal1 >>
+rect -650 980 -350 2860
+rect -250 980 50 2860
+rect 11800 980 12100 2800
+rect 12200 980 12500 2800
+rect -650 880 12500 980
+rect -650 -60 -350 880
+rect -250 -65 50 880
+rect 11800 -60 12100 880
+rect 12200 -60 12500 880
+<< metal2 >>
+rect -650 2760 12500 2860
+rect -650 1820 12500 1920
+rect -645 880 12500 980
+rect -660 -60 12495 40
+use isource_out  isource_out_0
+timestamp 1624072532
+transform 1 0 10 0 1 2815
+box 0 -935 11835 -5
+use bias  bias_0
+timestamp 1624062196
+transform 1 0 495 0 1 10
+box -485 -10 11350 1850
+<< end >>

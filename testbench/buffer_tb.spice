@@ -1,0 +1,45 @@
+* buffer testbench
+
+* Include SkyWater sky130 device models
+*.lib "~/git/open_pdks/sources/sky130-pdk/libraries/sky130_fd_pr/latest/models/sky130.lib.spice" tt
+.include "./setup.spice"
+.include "../spice/bias.spice"
+.include "../spice/buffer.spice"
+
+.param pVDD = 3.3
+
+VDD vdd 0 dc {pVDD} pulse(0 {pVDD} 1m 1m 10u 1 1)
+VSS vss 0 0
+ECM cm vss vdd vss 0.5
+VIN in cm dc 0 ac 1 PULSE(-0.25 0.25 0.1m 0.1m 0.1m 10m 20m)
+
+* DUT
+X0 vdd vss p1 p2 n2 n1 lo     bias
+*VP1 p1  vss 2.45
+*VP2 p2  vss 2.37
+*VN1 n1  vss 0.76
+*VN2 n2  vss 0.86
+
+X1 vdd vss p1 p2 n2 n1 in out buffer
+RL out cm 1e6
+CL out cm 100p
+
+.save vdd vss p1 p2 n2 n1 lo
+.save x1.p3 x1.n3 x1.xp x1.xn
+.save in cm out
+
+*.nodeset V(x0.LO)=10
+
+.option gmin=1e-12
+.control
+
+	dc VIN -1.65 1.65 10m
+	plot in out
+	plot deriv(out)
+
+    tran 100u 10m
+    plot in out
+        
+.endc
+
+.end

@@ -1,0 +1,74 @@
+* OTA testbench
+
+* Include SkyWater sky130 device models
+.include "setup.spice"
+.include "../spice/bias.spice"
+.include "../spice/ota.spice"
+
+.param pVDD = 3.3
+.param pAMP = 0.25
+
+*VDD vdd 0 dc {pVDD} pulse(0 {pVDD} 1m 1m 10u 1 1)
+VDD vdd 0 dc {pVDD} 
+VSS vss 0 0
+ECM cm vss vdd vss 0.5
+*VIN in cm dc 0 ac 1 SINE(0 {pAMP} 1k 0 0 0)
+VIN in cm dc 0 ac 1 pulse(-0.5 0.5 0.5m 1u 1u 1.0m 2.0m)
+
+* DUT
+X0 vdd vss p1 p2 n2 n1            bias
+X1 vdd vss p1 p2 n2 n1 in out out ota
+
+CL out cm 20p
+*RL out cm 1Meg
+
+.save vdd vss p1 p2 n2 n1
+.save in cm out
+*.save x1.x x1.yp x1.ym x1.z
+
+.option gmin=1e-12
+.control
+
+*	set  hcopydevtype = svg
+	
+	* DC operational condition simulation
+	op
+	print vdd vss p1 p2 n2 n1
+	print in cm out
+*	print x1.x x1.yp x1.z
+
+	* DC input voltage sweep
+	dc VIN -1.65 1.65 10m	
+	let dc_vo  = out
+	plot dc_vo
+	hardcopy ../data/ota_buffer_dc_vo.ps   dc_vo
+	wrdata   ../data/ota_buffer_dc_vo.data dc_vo
+
+	let dc_dvo = deriv(out)
+	plot dc_dvo
+	hardcopy ../data/ota_buffer_dc_dvo.ps    dc_dvo
+	wrdata   ../data/ota_buffer_dc_dvo.data dc_dvo
+	
+	* AC simulation
+	ac DEC 100 1 1G
+
+	let ac_gain = vdb(out)	
+	plot ac_gain
+	hardcopy ../data/ota_buffer_ac_gain.ps   ac_gain
+	wrdata   ../data/ota_buffer_ac_gain.data ac_gain
+
+	let ac_phase = 180/PI*cph(out)
+	plot ac_phase
+	hardcopy ../data/ota_buffer_ac_phase.ps   ac_phase
+	wrdata   ../data/ota_buffer_ac_phase.data ac_phase
+
+	* transient simulation
+    tran 1u 2m
+    plot in out
+    hardcopy ../data/ota_buffer_tran.ps    in out
+    wrdata ../data/ota_buffer_tran_vi.data in
+    wrdata ../data/ota_buffer_tran_vo.data out
+    
+.endc
+
+.end

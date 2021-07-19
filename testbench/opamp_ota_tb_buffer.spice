@@ -1,0 +1,62 @@
+* opamp testbench
+
+* Include SkyWater sky130 device models
+*.lib "~/git/open_pdks/sources/sky130-pdk/libraries/sky130_fd_pr/latest/models/sky130.lib.spice" tt
+.include "setup.spice"
+.include "../spice/bias.spice"
+.include "../spice/ota.spice"
+.include "../spice/buffer.spice"
+
+.param pVDD = 3.3
+.param pAMP = 0.25
+
+*VDD vdd 0 dc {pVDD} pulse(0 {pVDD} 1m 1m 10u 1 1)
+VDD vdd 0 dc {pVDD} 
+VSS vss 0 0
+ECM cm vss vdd vss 0.5
+*VIN in cm dc 0 ac 1 SINE(0 {pAMP} 1k 0 0 0)
+VIN in cm dc 0 ac 1 pulse(-0.5 0.5 5u 10n 10n 10u 20u)
+
+* DUT
+X0 vdd vss p1 p2 n2 n1          bias
+X1 vdd vss p1 p2 n2 n1 in out x ota
+X2 vdd vss p1 p2 n2 n1 x  out   buffer
+
+CL out cm 100p
+RL out cm 1Meg
+
+.save vdd vss p1 p2 n2 n1
+.save in cm x out
+*.save x1.x x1.yp x1.ym x1.z
+
+*.nodeset V(x0.LO)=10
+
+.option gmin=1e-12
+.control
+
+	op
+	print vdd vss p1 p2 n2 n1 lo
+	print in cm x out
+*	print x1.x x1.yp x1.z
+
+	dc VIN -1.65 1.65 10m
+	plot in x out
+	wrdata opamp_buffer_dc_vo.data out
+	let gain deriv(out)
+	plot gain
+	wrdata "../data/opamp_buffer_dc_dvo.data" gain
+	
+	ac DEC 100 1 1G
+	wrdata "../data/opamp_buffer_ac_gain.data" vdb(out/in)
+	wrdata "../data/opamp_buffer_ac_phase.data" ph(out/in)
+	plot vdb(out/in)
+	plot ph(out/in)
+
+    tran 10n 20u
+    plot in x out
+    wrdata "../data/opamp_buffer_tran.data" in out
+    
+    
+.endc
+
+.end
